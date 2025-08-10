@@ -1,215 +1,109 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EasyRent</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyRent</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="site-header">
-    <div class="wrap">
-      <h1>EasyRent</h1>
-      <p class="tagline">Βρες γρήγορα το επόμενο σου σπίτι — συγκεντρωμένα listings (demo)</p>
-    </div>
-  </header>
+    <header>
+        <h1>EasyRent</h1>
+        <div class="tabs">
+            <button id="tab-all" class="active">Όλες οι Αγγελίες</button>
+            <button id="tab-favorites">Αγαπημένα</button>
+        </div>
+    </header>
 
-  <main class="wrap">
-    <section class="controls">
-      <input id="q" placeholder="Αναζήτηση περιοχή ή λέξη-κλειδί..." />
-      <!-- Επίπεδο - δεν επιτρέπει αρνητικές τιμές -->
-      <input id="min" type="number" placeholder="Ελάχιστη τιμή €" min="0" />
-      <input id="max" type="number" placeholder="Μέγιστη τιμή €" min="0" />
-      <select id="sort">
-        <option value="relevance">Ταξινόμηση: Συνάφεια</option>
-        <option value="price_asc">Τιμή: Αύξουσα</option>
-        <option value="price_desc">Τιμή: Φθίνουσα</option>
-      </select>
-      <button id="apply">Εφαρμογή</button>
-      <button id="reset">Επαναφορά</button>
+    <section id="filters">
+        <label>Ελάχιστη τιμή:
+            <input type="number" id="minPrice" min="0">
+        </label>
+        <label>Μέγιστη τιμή:
+            <input type="number" id="maxPrice" min="0">
+        </label>
+        <button id="filterBtn">Φίλτρο</button>
     </section>
 
-    <section id="listings" class="grid">Φόρτωση...</section>
+    <main id="listingContainer"></main>
 
-    <div style="text-align:center;margin:20px 0;">
-      <button id="loadMore" class="btn" style="display:none;padding:10px 16px;border-radius:10px;">Φόρτωσε περισσότερα</button>
-    </div>
-  </main>
+    <script>
+        const listingContainer = document.getElementById('listingContainer');
+        const tabAll = document.getElementById('tab-all');
+        const tabFav = document.getElementById('tab-favorites');
+        const filterBtn = document.getElementById('filterBtn');
 
-  <template id="cardTpl">
-    <article class="card">
-      <div class="imgwrap"><img class="card-img" src="" alt="listing image"></div>
-      <div class="card-body">
-        <div class="meta"><span class="location"></span><span class="source"></span></div>
-        <h3 class="title"></h3>
-        <div class="price"></div>
-        <div class="card-actions">
-          <a class="btn view" target="_blank" rel="noopener">Προβολή</a>
-          <button class="fav" title="Προσθήκη στα αγαπημένα">♡</button>
-        </div>
-      </div>
-    </article>
-  </template>
+        let allListings = [];
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+        let currentTab = 'all';
 
-  <script>
-    const DATA_FILE = 'data.json';
-    let listings = [];
-    const FAV_KEY = 'easyrent_favs_v1';
-    const PAGE_SIZE = 6;
-    let currentCount = 0;
-
-    function parsePrice(p){
-      if(!p) return 0;
-      const n = (p+'').replace(/[^\d]/g,'');
-      return Number(n) || 0;
-    }
-
-    function loadFavorites(){
-      try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); }
-      catch(e){ return []; }
-    }
-    function saveFavorites(arr){ localStorage.setItem(FAV_KEY, JSON.stringify(arr)); }
-
-    function isFav(link){
-      const f = loadFavorites();
-      return f.includes(link);
-    }
-    function toggleFav(link){
-      let f = loadFavorites();
-      if(f.includes(link)) f = f.filter(x=>x!==link); else f.push(link);
-      saveFavorites(f);
-      // re-render current view (keep pagination state)
-      renderPaginated(currentFiltered());
-    }
-
-    async function fetchData(){
-      try {
-        const r = await fetch(DATA_FILE);
-        if(!r.ok) throw new Error('Failed to fetch data.json');
-        const d = await r.json();
-        listings = Array.isArray(d) ? d : [];
-        // initial render: reset pagination
-        currentCount = 0;
-        renderPaginated(listings);
-      } catch(err){
-        document.getElementById('listings').innerHTML = '<p class="msg">Δεν βρέθηκαν δεδομένα. Βεβαιώσου ότι υπάρχει data.json.</p>';
-        console.error(err);
-      }
-    }
-
-    function render(items){
-      // full render (not used for pagination)
-      const wrap = document.getElementById('listings');
-      wrap.innerHTML = '';
-      if(!items || items.length===0){ wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμα listings.</p>'; return; }
-      const tpl = document.getElementById('cardTpl');
-      items.forEach(it=>{
-        const node = tpl.content.cloneNode(true);
-        populateCard(node, it);
-        wrap.appendChild(node);
-      });
-    }
-
-    function populateCard(node, it){
-      const img = node.querySelector('.card-img');
-      img.src = it.image || 'https://via.placeholder.com/800x400?text=No+Image';
-      img.alt = it.title || 'Listing';
-      node.querySelector('.location').innerText = it.location || '';
-      node.querySelector('.source').innerText = it.source ? ' • ' + it.source : '';
-      node.querySelector('.title').innerText = it.title || '';
-      node.querySelector('.price').innerText = it.price || '';
-      const a = node.querySelector('.view');
-      a.href = it.link || '#';
-      const favBtn = node.querySelector('.fav');
-      favBtn.innerText = isFav(it.link) ? '♥' : '♡';
-      favBtn.addEventListener('click', ()=>{ toggleFav(it.link); });
-      // highlight favorite
-      if(isFav(it.link)) node.querySelector('.card').classList.add('favorite');
-    }
-
-    function renderPaginated(items){
-      const wrap = document.getElementById('listings');
-      wrap.innerHTML = '';
-      if(!items || items.length===0){
-        wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμα listings.</p>';
-        document.getElementById('loadMore').style.display = 'none';
-        return;
-      }
-      // adjust currentCount if out of range
-      if(currentCount > items.length) currentCount = items.length;
-      // slice items to show
-      const slice = items.slice(0, currentCount || PAGE_SIZE);
-      // if currentCount is zero, initialize to PAGE_SIZE
-      if(currentCount === 0) currentCount = Math.min(PAGE_SIZE, items.length);
-      slice.forEach(it=>{
-        const node = document.getElementById('cardTpl').content.cloneNode(true);
-        populateCard(node, it);
-        wrap.appendChild(node);
-      });
-      // show/hide load more
-      const loadMoreBtn = document.getElementById('loadMore');
-      if(currentCount < items.length){
-        loadMoreBtn.style.display = 'inline-block';
-        loadMoreBtn.innerText = `Φόρτωσε περισσότερα (${items.length - currentCount})`;
-      } else {
-        loadMoreBtn.style.display = 'none';
-      }
-    }
-
-    function currentFiltered(){
-      // ensure non-negative and numeric bounds
-      const q = document.getElementById('q').value.trim().toLowerCase();
-      let min = Number(document.getElementById('min').value);
-      let max = Number(document.getElementById('max').value);
-      if(isNaN(min) || min < 0) min = 0;
-      if(isNaN(max) || max < 0) max = 9999999;
-      let res = listings.filter(it=>{
-        const price = parsePrice(it.price);
-        const matchesQ = !q || (it.title && it.title.toLowerCase().includes(q)) || (it.location && it.location.toLowerCase().includes(q));
-        return matchesQ && price >= min && price <= max;
-      });
-      const sort = document.getElementById('sort').value;
-      if(sort === 'price_asc') res.sort((a,b)=> parsePrice(a.price) - parsePrice(b.price));
-      if(sort === 'price_desc') res.sort((a,b)=> parsePrice(b.price) - parsePrice(a.price));
-      return res;
-    }
-
-    document.getElementById('apply').addEventListener('click', ()=>{
-      // reset pagination when filters change
-      currentCount = 0;
-      renderPaginated(currentFiltered());
-    });
-
-    document.getElementById('reset').addEventListener('click', ()=>{
-      document.getElementById('q').value=''; document.getElementById('min').value=''; document.getElementById('max').value=''; document.getElementById('sort').value='relevance';
-      currentCount = 0;
-      renderPaginated(listings);
-    });
-
-    // load more button
-    document.getElementById('loadMore').addEventListener('click', ()=>{
-      const filtered = currentFiltered();
-      currentCount = Math.min(filtered.length, currentCount + PAGE_SIZE);
-      renderPaginated(filtered);
-    });
-
-    // prevent negative entries interactively and clamp on input
-    ['min','max'].forEach(id=>{
-      const el = document.getElementById(id);
-      el.addEventListener('input', ()=> {
-        if(el.value === '') return;
-        let v = Number(el.value);
-        if(isNaN(v) || v < 0) {
-          el.value = Math.max(0, Math.floor(v) || 0);
-        } else {
-          // ensure integer
-          el.value = Math.floor(v);
+        async function loadListings() {
+            const res = await fetch('data.json');
+            allListings = await res.json();
+            renderListings(allListings);
         }
-      });
-    });
 
-    // load on start
-    fetchData();
-  </script>
+        function renderListings(list) {
+            listingContainer.innerHTML = '';
+            if (list.length === 0) {
+                listingContainer.innerHTML = '<p>Δεν υπάρχουν διαθέσιμες αγγελίες.</p>';
+                return;
+            }
+            list.forEach(item => {
+                const div = document.createElement('div');
+                div.classList.add('listing');
+                div.innerHTML = `
+                    <img src="${item.image}" alt="${item.title}">
+                    <h3>${item.title}</h3>
+                    <p>${item.price} €</p>
+                    <button class="fav-btn">${favorites.includes(item.id) ? '♥' : '♡'}</button>
+                `;
+                div.querySelector('.fav-btn').addEventListener('click', () => toggleFavorite(item.id));
+                listingContainer.appendChild(div);
+            });
+        }
+
+        function toggleFavorite(id) {
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(f => f !== id);
+            } else {
+                favorites.push(id);
+            }
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            if (currentTab === 'favorites') {
+                renderListings(allListings.filter(item => favorites.includes(item.id)));
+            } else {
+                renderListings(allListings);
+            }
+        }
+
+        tabAll.addEventListener('click', () => {
+            currentTab = 'all';
+            tabAll.classList.add('active');
+            tabFav.classList.remove('active');
+            renderListings(allListings);
+        });
+
+        tabFav.addEventListener('click', () => {
+            currentTab = 'favorites';
+            tabFav.classList.add('active');
+            tabAll.classList.remove('active');
+            renderListings(allListings.filter(item => favorites.includes(item.id)));
+        });
+
+        filterBtn.addEventListener('click', () => {
+            const min = parseFloat(document.getElementById('minPrice').value) || 0;
+            const max = parseFloat(document.getElementById('maxPrice').value) || Infinity;
+            const filtered = allListings.filter(item => item.price >= min && item.price <= max);
+            if (currentTab === 'favorites') {
+                renderListings(filtered.filter(item => favorites.includes(item.id)));
+            } else {
+                renderListings(filtered);
+            }
+        });
+
+        loadListings();
+    </script>
 </body>
 </html>
+
