@@ -93,7 +93,7 @@
             node.querySelector('.card-img').src = it.image || 'https://via.placeholder.com/800x400?text=No+Image';
             node.querySelector('.location').innerText = it.location || '';
             node.querySelector('.title').innerText = it.title || '';
-            node.querySelector('.price').innerText = it.price || '';
+            node.querySelector('.price').innerText = it.price + ' €';
             node.querySelector('.view').href = it.link || '#';
             const favBtn = node.querySelector('.fav');
             favBtn.innerText = isFav(it.id) ? '♥' : '♡';
