@@ -17,8 +17,9 @@
   <main class="wrap">
     <section class="controls">
       <input id="q" placeholder="Αναζήτηση περιοχή ή λέξη-κλειδί..." />
-      <input id="min" type="number" placeholder="Ελάχιστη τιμή €" />
-      <input id="max" type="number" placeholder="Μέγιστη τιμή €" />
+      <!-- Επίπεδο - δεν επιτρέπει αρνητικές τιμές -->
+      <input id="min" type="number" placeholder="Ελάχιστη τιμή €" min="0" />
+      <input id="max" type="number" placeholder="Μέγιστη τιμή €" min="0" />
       <select id="sort">
         <option value="relevance">Ταξινόμηση: Συνάφεια</option>
         <option value="price_asc">Τιμή: Αύξουσα</option>
@@ -29,6 +30,10 @@
     </section>
 
     <section id="listings" class="grid">Φόρτωση...</section>
+
+    <div style="text-align:center;margin:20px 0;">
+      <button id="loadMore" class="btn" style="display:none;padding:10px 16px;border-radius:10px;">Φόρτωσε περισσότερα</button>
+    </div>
   </main>
 
   <template id="cardTpl">
@@ -50,6 +55,8 @@
     const DATA_FILE = 'data.json';
     let listings = [];
     const FAV_KEY = 'easyrent_favs_v1';
+    const PAGE_SIZE = 6;
+    let currentCount = 0;
 
     function parsePrice(p){
       if(!p) return 0;
@@ -71,7 +78,8 @@
       let f = loadFavorites();
       if(f.includes(link)) f = f.filter(x=>x!==link); else f.push(link);
       saveFavorites(f);
-      render(currentFiltered());
+      // re-render current view (keep pagination state)
+      renderPaginated(currentFiltered());
     }
 
     async function fetchData(){
@@ -80,7 +88,9 @@
         if(!r.ok) throw new Error('Failed to fetch data.json');
         const d = await r.json();
         listings = Array.isArray(d) ? d : [];
-        render(listings);
+        // initial render: reset pagination
+        currentCount = 0;
+        renderPaginated(listings);
       } catch(err){
         document.getElementById('listings').innerHTML = '<p class="msg">Δεν βρέθηκαν δεδομένα. Βεβαιώσου ότι υπάρχει data.json.</p>';
         console.error(err);
@@ -88,34 +98,71 @@
     }
 
     function render(items){
+      // full render (not used for pagination)
       const wrap = document.getElementById('listings');
       wrap.innerHTML = '';
       if(!items || items.length===0){ wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμα listings.</p>'; return; }
       const tpl = document.getElementById('cardTpl');
       items.forEach(it=>{
         const node = tpl.content.cloneNode(true);
-        const img = node.querySelector('.card-img');
-        img.src = it.image || 'https://via.placeholder.com/800x400?text=No+Image';
-        img.alt = it.title || 'Listing';
-        node.querySelector('.location').innerText = it.location || '';
-        node.querySelector('.source').innerText = it.source ? ' • ' + it.source : '';
-        node.querySelector('.title').innerText = it.title || '';
-        node.querySelector('.price').innerText = it.price || '';
-        const a = node.querySelector('.view');
-        a.href = it.link || '#';
-        const favBtn = node.querySelector('.fav');
-        favBtn.innerText = isFav(it.link) ? '♥' : '♡';
-        favBtn.addEventListener('click', ()=>{ toggleFav(it.link); });
-        // highlight favorite
-        if(isFav(it.link)) node.querySelector('.card').classList.add('favorite');
+        populateCard(node, it);
         wrap.appendChild(node);
       });
     }
 
+    function populateCard(node, it){
+      const img = node.querySelector('.card-img');
+      img.src = it.image || 'https://via.placeholder.com/800x400?text=No+Image';
+      img.alt = it.title || 'Listing';
+      node.querySelector('.location').innerText = it.location || '';
+      node.querySelector('.source').innerText = it.source ? ' • ' + it.source : '';
+      node.querySelector('.title').innerText = it.title || '';
+      node.querySelector('.price').innerText = it.price || '';
+      const a = node.querySelector('.view');
+      a.href = it.link || '#';
+      const favBtn = node.querySelector('.fav');
+      favBtn.innerText = isFav(it.link) ? '♥' : '♡';
+      favBtn.addEventListener('click', ()=>{ toggleFav(it.link); });
+      // highlight favorite
+      if(isFav(it.link)) node.querySelector('.card').classList.add('favorite');
+    }
+
+    function renderPaginated(items){
+      const wrap = document.getElementById('listings');
+      wrap.innerHTML = '';
+      if(!items || items.length===0){
+        wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμα listings.</p>';
+        document.getElementById('loadMore').style.display = 'none';
+        return;
+      }
+      // adjust currentCount if out of range
+      if(currentCount > items.length) currentCount = items.length;
+      // slice items to show
+      const slice = items.slice(0, currentCount || PAGE_SIZE);
+      // if currentCount is zero, initialize to PAGE_SIZE
+      if(currentCount === 0) currentCount = Math.min(PAGE_SIZE, items.length);
+      slice.forEach(it=>{
+        const node = document.getElementById('cardTpl').content.cloneNode(true);
+        populateCard(node, it);
+        wrap.appendChild(node);
+      });
+      // show/hide load more
+      const loadMoreBtn = document.getElementById('loadMore');
+      if(currentCount < items.length){
+        loadMoreBtn.style.display = 'inline-block';
+        loadMoreBtn.innerText = `Φόρτωσε περισσότερα (${items.length - currentCount})`;
+      } else {
+        loadMoreBtn.style.display = 'none';
+      }
+    }
+
     function currentFiltered(){
+      // ensure non-negative and numeric bounds
       const q = document.getElementById('q').value.trim().toLowerCase();
-      const min = Number(document.getElementById('min').value) || 0;
-      const max = Number(document.getElementById('max').value) || 9999999;
+      let min = Number(document.getElementById('min').value);
+      let max = Number(document.getElementById('max').value);
+      if(isNaN(min) || min < 0) min = 0;
+      if(isNaN(max) || max < 0) max = 9999999;
       let res = listings.filter(it=>{
         const price = parsePrice(it.price);
         const matchesQ = !q || (it.title && it.title.toLowerCase().includes(q)) || (it.location && it.location.toLowerCase().includes(q));
@@ -127,10 +174,38 @@
       return res;
     }
 
-    document.getElementById('apply').addEventListener('click', ()=> render(currentFiltered()));
+    document.getElementById('apply').addEventListener('click', ()=>{
+      // reset pagination when filters change
+      currentCount = 0;
+      renderPaginated(currentFiltered());
+    });
+
     document.getElementById('reset').addEventListener('click', ()=>{
       document.getElementById('q').value=''; document.getElementById('min').value=''; document.getElementById('max').value=''; document.getElementById('sort').value='relevance';
-      render(listings);
+      currentCount = 0;
+      renderPaginated(listings);
+    });
+
+    // load more button
+    document.getElementById('loadMore').addEventListener('click', ()=>{
+      const filtered = currentFiltered();
+      currentCount = Math.min(filtered.length, currentCount + PAGE_SIZE);
+      renderPaginated(filtered);
+    });
+
+    // prevent negative entries interactively and clamp on input
+    ['min','max'].forEach(id=>{
+      const el = document.getElementById(id);
+      el.addEventListener('input', ()=> {
+        if(el.value === '') return;
+        let v = Number(el.value);
+        if(isNaN(v) || v < 0) {
+          el.value = Math.max(0, Math.floor(v) || 0);
+        } else {
+          // ensure integer
+          el.value = Math.floor(v);
+        }
+      });
     });
 
     // load on start
