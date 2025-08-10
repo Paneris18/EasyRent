@@ -108,7 +108,7 @@ async function fetchData() {
 }
 
 function getCurrentList() {
-    let q = document.getElementById('q').value.trim().toLowerCase();
+    let q = document.getElementById('q').value.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
     let min = parseFloat(document.getElementById('min').value);
     let max = parseFloat(document.getElementById('max').value);
     if (isNaN(min) || min < 0) min = 0;
