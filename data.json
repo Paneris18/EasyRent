@@ -1,4 +1,4 @@
-[
+[ 
   { "id": 1, "title": "Διαμέρισμα 80τ.μ. στο Κέντρο Θεσσαλονίκης", "location": "Θεσσαλονίκη, Κέντρο", "price": 650, "image": "https://images.unsplash.com/photo-1598928506311-c55ded91a20a", "link": "#" },
   { "id": 2, "title": "Μονοκατοικία με κήπο 120τ.μ. στη Νέα Σμύρνη", "location": "Αθήνα, Νέα Σμύρνη", "price": 950, "image": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c", "link": "#" },
   { "id": 3, "title": "Γκαρσονιέρα 35τ.μ. κοντά στο ΑΠΘ", "location": "Θεσσαλονίκη, Τούμπα", "price": 300, "image": "https://images.unsplash.com/photo-1560185127-6ed189bf02f4", "link": "#" },
