@@ -1,0 +1,16 @@
+[
+  {
+    "title": "Διαμέρισμα 2 υπν. στο Παγκράτι",
+    "price": "€650 / μήνα",
+    "location": "Παγκράτι, Αθήνα",
+    "link": "https://example.com/listing/1",
+    "image": "https://via.placeholder.com/800x400?text=Apartment+1"
+  },
+  {
+    "title": "Στούντιο κοντά στο Μετρό",
+    "price": "€420 / μήνα",
+    "location": "Κάτω Πατήσια, Αθήνα",
+    "link": "https://example.com/listing/2",
+    "image": "https://via.placeholder.com/800x400?text=Studio"
+  }
+]

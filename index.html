@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EasyRent - Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>EasyRent</h1>
+    <p>Aggregated rental listings - Demo</p>
+  </header>
+
+  <main id="main">
+    <div id="filters">
+      <input id="q" placeholder="Αναζήτηση περιοχής..." />
+      <input id="min" type="number" placeholder="Ελάχιστη τιμή" />
+      <input id="max" type="number" placeholder="Μέγιστη τιμή" />
+      <button id="apply">Φίλτρα</button>
+    </div>
+
+    <div id="listings">Φόρτωση...</div>
+  </main>
+
+  <script>
+    async function loadData(){
+      try {
+        const r = await fetch('data.json');
+        const data = await r.json();
+        render(data);
+      } catch(e) {
+        document.getElementById('listings').innerText = 'Δεν βρέθηκαν δεδομένα. Τρέξε τον scraper για να δημιουργηθεί data.json.';
+        console.error(e);
+      }
+    }
+
+    function render(items){
+      const wrap = document.getElementById('listings');
+      wrap.innerHTML = '';
+      if(!items || items.length===0){
+        wrap.innerHTML = '<p>Δεν υπάρχουν listings.</p>';
+        return;
+      }
+      items.forEach(it=>{
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML = `
+          <img class="card-img" src="${it.image || 'https://via.placeholder.com/800x400?text=No+Image'}" alt="">
+          <div class="card-body">
+            <div class="meta">${it.location} • <small>Source</small></div>
+            <h3 class="title">${it.title}</h3>
+            <div class="price">${it.price}</div>
+            <p><a class="btn" href="${it.link}" target="_blank" rel="noopener">Προβολή</a></p>
+          </div>
+        `;
+        wrap.appendChild(el);
+      });
+    }
+
+    // simple filter
+    document.getElementById('apply').addEventListener('click', async () => {
+      const q = document.getElementById('q').value.toLowerCase();
+      const min = Number(document.getElementById('min').value) || 0;
+      const max = Number(document.getElementById('max').value) || 999999;
+      const r = await fetch('data.json');
+      const data = await r.json();
+      const filtered = data.filter(it=>{
+        const priceNum = Number((it.price || '').replace(/[^\d]/g,''));
+        const inQ = !q || (it.location && it.location.toLowerCase().includes(q)) || (it.title && it.title.toLowerCase().includes(q));
+        return inQ && priceNum >= min && priceNum <= max;
+      });
+      render(filtered);
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
