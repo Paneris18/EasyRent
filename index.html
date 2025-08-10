@@ -36,7 +36,7 @@
     <section id="listings" class="grid">Φόρτωση...</section>
   </main>
 
-  <templatcardTpl">
+  <template id="cardTpl">
     <article class="card">
       <div class="imgwrap"><img class="card-img" src="" alt="listing image"></div>
       <div class="card-body">
@@ -57,7 +57,6 @@
     let listings = [];
     let currentTab = 'all';
 
-    // Φόρτωση / Αποθήκευση αγαπημένων
     const loadFavorites = () => JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
     const saveFavorites = favs => localStorage.setItem(FAV_KEY, JSON.stringify(favs));
     const isFav = id => loadFavorites().includes(id);
@@ -108,7 +107,6 @@
         });
     }
 
-    // Φίλτρα
     document.getElementById('apply').addEventListener('click', () => {
         let min = parseFloat(document.getElementById('min').value) || 0;
         let max = parseFloat(document.getElementById('max').value) || Infinity;
@@ -130,7 +128,6 @@
         else renderListings(listings);
     });
 
-    // Εναλλαγή tabs
     document.getElementById('tab-all').addEventListener('click', () => {
         currentTab = 'all';
         document.getElementById('tab-all').classList.add('active');
@@ -147,7 +144,5 @@
 
     fetchData();
 </script>
-
-
 </body>
 </html>
