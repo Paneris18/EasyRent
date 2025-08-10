@@ -71,10 +71,7 @@
             btn.innerText = '♥';
         }
         saveFavorites(favs);
-
-        if (currentTab === 'fav') {
-            renderListings(listings.filter(l => isFav(l.id)));
-        }
+        if (currentTab === 'fav') renderListings(listings.filter(l => isFav(l.id)));
     }
 
     async function fetchData() {
@@ -87,7 +84,7 @@
         const wrap = document.getElementById('listings');
         wrap.innerHTML = '';
         if (!data.length) {
-            wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμα listings.</p>';
+            wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμες αγγελίες.</p>';
             return;
         }
         const tpl = document.getElementById('cardTpl');
@@ -98,27 +95,30 @@
             node.querySelector('.title').innerText = it.title || '';
             node.querySelector('.price').innerText = it.price || '';
             node.querySelector('.view').href = it.link || '#';
-
             const favBtn = node.querySelector('.fav');
             favBtn.innerText = isFav(it.id) ? '♥' : '♡';
             favBtn.addEventListener('click', () => toggleFav(it.id, favBtn));
-
             wrap.appendChild(node);
         });
     }
 
-    document.getElementById('apply').addEventListener('click', () => {
-        let min = parseFloat(document.getElementById('min').value) || 0;
-        let max = parseFloat(document.getElementById('max').value) || Infinity;
+    function applyFilters() {
+        let min = parseFloat(document.getElementById('min').value);
+        let max = parseFloat(document.getElementById('max').value);
         let q = document.getElementById('q').value.trim().toLowerCase();
+        if (isNaN(min) || min < 0) min = 0;
+        if (isNaN(max) || max < 0) max = Infinity;
+
         let filtered = listings.filter(it => {
             let p = parseFloat(it.price) || 0;
             return p >= min && p <= max &&
-                   (!q || it.title.toLowerCase().includes(q) || it.location.toLowerCase().includes(q));
+                (!q || it.title.toLowerCase().includes(q) || it.location.toLowerCase().includes(q));
         });
         if (currentTab === 'fav') filtered = filtered.filter(l => isFav(l.id));
         renderListings(filtered);
-    });
+    }
+
+    document.getElementById('apply').addEventListener('click', applyFilters);
 
     document.getElementById('reset').addEventListener('click', () => {
         document.getElementById('q').value = '';
