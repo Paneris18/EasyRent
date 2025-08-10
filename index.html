@@ -1,109 +1,143 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="el">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EasyRent</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EasyRent</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>EasyRent</h1>
-        <div class="tabs">
-            <button id="tab-all" class="active">Όλες οι Αγγελίες</button>
-            <button id="tab-favorites">Αγαπημένα</button>
-        </div>
-    </header>
+  <header class="site-header">
+    <div class="wrap">
+      <h1>EasyRent</h1>
+      <p class="tagline">Βρες γρήγορα το επόμενο σου σπίτι — συγκεντρωμένα listings (demo)</p>
+    </div>
+  </header>
 
-    <section id="filters">
-        <label>Ελάχιστη τιμή:
-            <input type="number" id="minPrice" min="0">
-        </label>
-        <label>Μέγιστη τιμή:
-            <input type="number" id="maxPrice" min="0">
-        </label>
-        <button id="filterBtn">Φίλτρο</button>
+  <main class="wrap">
+    <div class="tabs">
+      <button id="tab-all" class="tab active">Όλες οι Αγγελίες</button>
+      <button id="tab-fav" class="tab">Αγαπημένα</button>
+    </div>
+
+    <section class="controls">
+      <input id="q" placeholder="Αναζήτηση περιοχή ή λέξη-κλειδί..." />
+      <input id="min" type="number" placeholder="Ελάχιστη τιμή €" min="0" />
+      <input id="max" type="number" placeholder="Μέγιστη τιμή €" min="0" />
+      <select id="sort">
+        <option value="relevance">Ταξινόμηση: Συνάφεια</option>
+        <option value="price_asc">Τιμή: Αύξουσα</option>
+        <option value="price_desc">Τιμή: Φθίνουσα</option>
+      </select>
+      <button id="apply">Εφαρμογή</button>
+      <button id="reset">Επαναφορά</button>
     </section>
 
-    <main id="listingContainer"></main>
+    <section id="listings" class="grid">Φόρτωση...</section>
+  </main>
 
-    <script>
-        const listingContainer = document.getElementById('listingContainer');
-        const tabAll = document.getElementById('tab-all');
-        const tabFav = document.getElementById('tab-favorites');
-        const filterBtn = document.getElementById('filterBtn');
+  <template id="cardTpl">
+    <article class="card">
+      <div class="imgwrap"><img class="card-img" src="" alt="listing image"></div>
+      <div class="card-body">
+        <div class="meta"><span class="location"></span></div>
+        <h3 class="title"></h3>
+        <div class="price"></div>
+        <div class="card-actions">
+          <a class="btn view" target="_blank" rel="noopener">Προβολή</a>
+          <button class="fav" title="Προσθήκη στα αγαπημένα">♡</button>
+        </div>
+      </div>
+    </article>
+  </template>
 
-        let allListings = [];
-        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-        let currentTab = 'all';
+  <script>
+    const DATA_FILE = 'data.json';
+    const FAV_KEY = 'easyrent_favs_v1';
+    let listings = [];
+    let currentTab = 'all';
 
-        async function loadListings() {
-            const res = await fetch('data.json');
-            allListings = await res.json();
-            renderListings(allListings);
-        }
+    const loadFavorites = () => JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
+    const saveFavorites = favs => localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+    const isFav = id => loadFavorites().includes(id);
 
-        function renderListings(list) {
-            listingContainer.innerHTML = '';
-            if (list.length === 0) {
-                listingContainer.innerHTML = '<p>Δεν υπάρχουν διαθέσιμες αγγελίες.</p>';
-                return;
-            }
-            list.forEach(item => {
-                const div = document.createElement('div');
-                div.classList.add('listing');
-                div.innerHTML = `
-                    <img src="${item.image}" alt="${item.title}">
-                    <h3>${item.title}</h3>
-                    <p>${item.price} €</p>
-                    <button class="fav-btn">${favorites.includes(item.id) ? '♥' : '♡'}</button>
-                `;
-                div.querySelector('.fav-btn').addEventListener('click', () => toggleFavorite(item.id));
-                listingContainer.appendChild(div);
-            });
-        }
+    function toggleFav(id, btn){
+      let favs = loadFavorites();
+      if(favs.includes(id)){
+        favs = favs.filter(f => f !== id);
+        btn.innerText = '♡';
+      } else {
+        favs.push(id);
+        btn.innerText = '♥';
+      }
+      saveFavorites(favs);
+      if(currentTab === 'fav') renderListings(listings.filter(l => isFav(l.id)));
+    }
 
-        function toggleFavorite(id) {
-            if (favorites.includes(id)) {
-                favorites = favorites.filter(f => f !== id);
-            } else {
-                favorites.push(id);
-            }
-            localStorage.setItem('favorites', JSON.stringify(favorites));
-            if (currentTab === 'favorites') {
-                renderListings(allListings.filter(item => favorites.includes(item.id)));
-            } else {
-                renderListings(allListings);
-            }
-        }
+    async function fetchData(){
+      const r = await fetch(DATA_FILE);
+      listings = await r.json();
+      renderListings(listings);
+    }
 
-        tabAll.addEventListener('click', () => {
-            currentTab = 'all';
-            tabAll.classList.add('active');
-            tabFav.classList.remove('active');
-            renderListings(allListings);
-        });
+    function renderListings(data){
+      const wrap = document.getElementById('listings');
+      wrap.innerHTML = '';
+      if(!data.length){
+        wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμα listings.</p>';
+        return;
+      }
+      const tpl = document.getElementById('cardTpl');
+      data.forEach(it => {
+        const node = tpl.content.cloneNode(true);
+        node.querySelector('.card-img').src = it.image || 'https://via.placeholder.com/800x400?text=No+Image';
+        node.querySelector('.location').innerText = it.location || '';
+        node.querySelector('.title').innerText = it.title || '';
+        node.querySelector('.price').innerText = it.price || '';
+        node.querySelector('.view').href = it.link || '#';
+        const favBtn = node.querySelector('.fav');
+        favBtn.innerText = isFav(it.id) ? '♥' : '♡';
+        favBtn.addEventListener('click', () => toggleFav(it.id, favBtn));
+        wrap.appendChild(node);
+      });
+    }
 
-        tabFav.addEventListener('click', () => {
-            currentTab = 'favorites';
-            tabFav.classList.add('active');
-            tabAll.classList.remove('active');
-            renderListings(allListings.filter(item => favorites.includes(item.id)));
-        });
+    document.getElementById('apply').addEventListener('click', ()=>{
+      let min = parseFloat(document.getElementById('min').value) || 0;
+      let max = parseFloat(document.getElementById('max').value) || Infinity;
+      let q = document.getElementById('q').value.trim().toLowerCase();
+      let filtered = listings.filter(it=>{
+        let p = parseFloat(it.price) || 0;
+        return p >= min && p <= max &&
+               (!q || it.title.toLowerCase().includes(q) || it.location.toLowerCase().includes(q));
+      });
+      if(currentTab === 'fav') filtered = filtered.filter(l => isFav(l.id));
+      renderListings(filtered);
+    });
 
-        filterBtn.addEventListener('click', () => {
-            const min = parseFloat(document.getElementById('minPrice').value) || 0;
-            const max = parseFloat(document.getElementById('maxPrice').value) || Infinity;
-            const filtered = allListings.filter(item => item.price >= min && item.price <= max);
-            if (currentTab === 'favorites') {
-                renderListings(filtered.filter(item => favorites.includes(item.id)));
-            } else {
-                renderListings(filtered);
-            }
-        });
+    document.getElementById('reset').addEventListener('click', ()=>{
+      document.getElementById('q').value='';
+      document.getElementById('min').value='';
+      document.getElementById('max').value='';
+      if(currentTab === 'fav') renderListings(listings.filter(l => isFav(l.id)));
+      else renderListings(listings);
+    });
 
-        loadListings();
-    </script>
+    document.getElementById('tab-all').addEventListener('click', ()=>{
+      currentTab = 'all';
+      document.getElementById('tab-all').classList.add('active');
+      document.getElementById('tab-fav').classList.remove('active');
+      renderListings(listings);
+    });
+
+    document.getElementById('tab-fav').addEventListener('click', ()=>{
+      currentTab = 'fav';
+      document.getElementById('tab-fav').classList.add('active');
+      document.getElementById('tab-all').classList.remove('active');
+      renderListings(listings.filter(l => isFav(l.id)));
+    });
+
+    fetchData();
+  </script>
 </body>
 </html>
-
