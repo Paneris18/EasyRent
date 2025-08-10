@@ -216,6 +216,29 @@ function updateMapMarkers(data) {
 }
 
 const oldRenderListings = renderListings;
+// Αντικαθιστούμε πλήρως τη renderListings για να ενημερώνει και τον χάρτη
+
+renderListings = function(data) {
+
+    const container = document.getElementById("listings");
+
+    container.innerHTML = "";
+
+    data.forEach(it => {
+
+        const card = document.createElement("div");
+
+        card.className = "listing";
+
+        card.innerHTML = `<img src="${it.image}" alt="${it.title}"><h3>${it.title}</h3><p>${it.location}</p><p>${it.price} €</p>`;
+
+        container.appendChild(card);
+
+    });
+
+    updateMapMarkers(data);
+
+};
 
 renderListings = function(data) {
 
