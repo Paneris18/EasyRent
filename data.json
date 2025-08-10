@@ -1,16 +1,50 @@
 [
   {
-    "title": "Διαμέρισμα 2 υπν. στο Παγκράτι",
-    "price": "€650 / μήνα",
+    "title": "2-bedroom apartment near Kallimarmaro",
+    "price": "€650 / month",
     "location": "Παγκράτι, Αθήνα",
-    "link": "https://example.com/listing/1",
-    "image": "https://via.placeholder.com/800x400?text=Apartment+1"
+    "link": "https://www.spitogatos.gr/listing/12345",
+    "image": "https://picsum.photos/seed/apt1/800/400",
+    "source": "Spitogatos"
   },
   {
-    "title": "Στούντιο κοντά στο Μετρό",
-    "price": "€420 / μήνα",
+    "title": "Studio - close to metro station",
+    "price": "€420 / month",
     "location": "Κάτω Πατήσια, Αθήνα",
-    "link": "https://example.com/listing/2",
-    "image": "https://via.placeholder.com/800x400?text=Studio"
+    "link": "https://www.spitogatos.gr/listing/23456",
+    "image": "https://picsum.photos/seed/studio1/800/400",
+    "source": "Spitogatos"
+  },
+  {
+    "title": "Cozy 1-bedroom apartment",
+    "price": "€550 / month",
+    "location": "Νεάπολη, Θεσσαλονίκη",
+    "link": "https://www.spitogatos.gr/listing/34567",
+    "image": "https://picsum.photos/seed/apt2/800/400",
+    "source": "Spitogatos"
+  },
+  {
+    "title": "Large 3-bedroom for families",
+    "price": "€1,050 / month",
+    "location": "Μαρούσι, Αθήνα",
+    "link": "https://www.spitogatos.gr/listing/45678",
+    "image": "https://picsum.photos/seed/apt3/800/400",
+    "source": "Spitogatos"
+  },
+  {
+    "title": "Sunny studio with balcony",
+    "price": "€490 / month",
+    "location": "Κηφισιά, Αθήνα",
+    "link": "https://www.spitogatos.gr/listing/56789",
+    "image": "https://picsum.photos/seed/studio2/800/400",
+    "source": "Spitogatos"
+  },
+  {
+    "title": "Renovated apartment, quiet street",
+    "price": "€720 / month",
+    "location": "Πετράλωνα, Αθήνα",
+    "link": "https://www.spitogatos.gr/listing/67890",
+    "image": "https://picsum.photos/seed/apt4/800/400",
+    "source": "Spitogatos"
   }
 ]

@@ -3,77 +3,138 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EasyRent - Demo</title>
+  <title>EasyRent</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>EasyRent</h1>
-    <p>Aggregated rental listings - Demo</p>
+  <header class="site-header">
+    <div class="wrap">
+      <h1>EasyRent</h1>
+      <p class="tagline">Βρες γρήγορα το επόμενο σου σπίτι — συγκεντρωμένα listings (demo)</p>
+    </div>
   </header>
 
-  <main id="main">
-    <div id="filters">
-      <input id="q" placeholder="Αναζήτηση περιοχής..." />
-      <input id="min" type="number" placeholder="Ελάχιστη τιμή" />
-      <input id="max" type="number" placeholder="Μέγιστη τιμή" />
-      <button id="apply">Φίλτρα</button>
-    </div>
+  <main class="wrap">
+    <section class="controls">
+      <input id="q" placeholder="Αναζήτηση περιοχή ή λέξη-κλειδί..." />
+      <input id="min" type="number" placeholder="Ελάχιστη τιμή €" />
+      <input id="max" type="number" placeholder="Μέγιστη τιμή €" />
+      <select id="sort">
+        <option value="relevance">Ταξινόμηση: Συνάφεια</option>
+        <option value="price_asc">Τιμή: Αύξουσα</option>
+        <option value="price_desc">Τιμή: Φθίνουσα</option>
+      </select>
+      <button id="apply">Εφαρμογή</button>
+      <button id="reset">Επαναφορά</button>
+    </section>
 
-    <div id="listings">Φόρτωση...</div>
+    <section id="listings" class="grid">Φόρτωση...</section>
   </main>
 
+  <template id="cardTpl">
+    <article class="card">
+      <div class="imgwrap"><img class="card-img" src="" alt="listing image"></div>
+      <div class="card-body">
+        <div class="meta"><span class="location"></span><span class="source"></span></div>
+        <h3 class="title"></h3>
+        <div class="price"></div>
+        <div class="card-actions">
+          <a class="btn view" target="_blank" rel="noopener">Προβολή</a>
+          <button class="fav" title="Προσθήκη στα αγαπημένα">♡</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
   <script>
-    async function loadData(){
+    const DATA_FILE = 'data.json';
+    let listings = [];
+    const FAV_KEY = 'easyrent_favs_v1';
+
+    function parsePrice(p){
+      if(!p) return 0;
+      const n = (p+'').replace(/[^\d]/g,'');
+      return Number(n) || 0;
+    }
+
+    function loadFavorites(){
+      try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); }
+      catch(e){ return []; }
+    }
+    function saveFavorites(arr){ localStorage.setItem(FAV_KEY, JSON.stringify(arr)); }
+
+    function isFav(link){
+      const f = loadFavorites();
+      return f.includes(link);
+    }
+    function toggleFav(link){
+      let f = loadFavorites();
+      if(f.includes(link)) f = f.filter(x=>x!==link); else f.push(link);
+      saveFavorites(f);
+      render(currentFiltered());
+    }
+
+    async function fetchData(){
       try {
-        const r = await fetch('data.json');
-        const data = await r.json();
-        render(data);
-      } catch(e) {
-        document.getElementById('listings').innerText = 'Δεν βρέθηκαν δεδομένα. Τρέξε τον scraper για να δημιουργηθεί data.json.';
-        console.error(e);
+        const r = await fetch(DATA_FILE);
+        if(!r.ok) throw new Error('Failed to fetch data.json');
+        const d = await r.json();
+        listings = Array.isArray(d) ? d : [];
+        render(listings);
+      } catch(err){
+        document.getElementById('listings').innerHTML = '<p class="msg">Δεν βρέθηκαν δεδομένα. Βεβαιώσου ότι υπάρχει data.json.</p>';
+        console.error(err);
       }
     }
 
     function render(items){
       const wrap = document.getElementById('listings');
       wrap.innerHTML = '';
-      if(!items || items.length===0){
-        wrap.innerHTML = '<p>Δεν υπάρχουν listings.</p>';
-        return;
-      }
+      if(!items || items.length===0){ wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμα listings.</p>'; return; }
+      const tpl = document.getElementById('cardTpl');
       items.forEach(it=>{
-        const el = document.createElement('div');
-        el.className = 'card';
-        el.innerHTML = `
-          <img class="card-img" src="${it.image || 'https://via.placeholder.com/800x400?text=No+Image'}" alt="">
-          <div class="card-body">
-            <div class="meta">${it.location} • <small>Source</small></div>
-            <h3 class="title">${it.title}</h3>
-            <div class="price">${it.price}</div>
-            <p><a class="btn" href="${it.link}" target="_blank" rel="noopener">Προβολή</a></p>
-          </div>
-        `;
-        wrap.appendChild(el);
+        const node = tpl.content.cloneNode(true);
+        const img = node.querySelector('.card-img');
+        img.src = it.image || 'https://via.placeholder.com/800x400?text=No+Image';
+        img.alt = it.title || 'Listing';
+        node.querySelector('.location').innerText = it.location || '';
+        node.querySelector('.source').innerText = it.source ? ' • ' + it.source : '';
+        node.querySelector('.title').innerText = it.title || '';
+        node.querySelector('.price').innerText = it.price || '';
+        const a = node.querySelector('.view');
+        a.href = it.link || '#';
+        const favBtn = node.querySelector('.fav');
+        favBtn.innerText = isFav(it.link) ? '♥' : '♡';
+        favBtn.addEventListener('click', ()=>{ toggleFav(it.link); });
+        // highlight favorite
+        if(isFav(it.link)) node.querySelector('.card').classList.add('favorite');
+        wrap.appendChild(node);
       });
     }
 
-    // simple filter
-    document.getElementById('apply').addEventListener('click', async () => {
-      const q = document.getElementById('q').value.toLowerCase();
+    function currentFiltered(){
+      const q = document.getElementById('q').value.trim().toLowerCase();
       const min = Number(document.getElementById('min').value) || 0;
-      const max = Number(document.getElementById('max').value) || 999999;
-      const r = await fetch('data.json');
-      const data = await r.json();
-      const filtered = data.filter(it=>{
-        const priceNum = Number((it.price || '').replace(/[^\d]/g,''));
-        const inQ = !q || (it.location && it.location.toLowerCase().includes(q)) || (it.title && it.title.toLowerCase().includes(q));
-        return inQ && priceNum >= min && priceNum <= max;
+      const max = Number(document.getElementById('max').value) || 9999999;
+      let res = listings.filter(it=>{
+        const price = parsePrice(it.price);
+        const matchesQ = !q || (it.title && it.title.toLowerCase().includes(q)) || (it.location && it.location.toLowerCase().includes(q));
+        return matchesQ && price >= min && price <= max;
       });
-      render(filtered);
+      const sort = document.getElementById('sort').value;
+      if(sort === 'price_asc') res.sort((a,b)=> parsePrice(a.price) - parsePrice(b.price));
+      if(sort === 'price_desc') res.sort((a,b)=> parsePrice(b.price) - parsePrice(a.price));
+      return res;
+    }
+
+    document.getElementById('apply').addEventListener('click', ()=> render(currentFiltered()));
+    document.getElementById('reset').addEventListener('click', ()=>{
+      document.getElementById('q').value=''; document.getElementById('min').value=''; document.getElementById('max').value=''; document.getElementById('sort').value='relevance';
+      render(listings);
     });
 
-    loadData();
+    // load on start
+    fetchData();
   </script>
 </body>
 </html>
