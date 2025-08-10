@@ -36,7 +36,7 @@
     <section id="listings" class="grid">Φόρτωση...</section>
   </main>
 
-  <template id="cardTpl">
+  <templatcardTpl">
     <article class="card">
       <div class="imgwrap"><img class="card-img" src="" alt="listing image"></div>
       <div class="card-body">
@@ -51,93 +51,103 @@
     </article>
   </template>
 
-  <script>
+<script>
     const DATA_FILE = 'data.json';
     const FAV_KEY = 'easyrent_favs_v1';
     let listings = [];
     let currentTab = 'all';
 
+    // Φόρτωση / Αποθήκευση αγαπημένων
     const loadFavorites = () => JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
     const saveFavorites = favs => localStorage.setItem(FAV_KEY, JSON.stringify(favs));
     const isFav = id => loadFavorites().includes(id);
 
-    function toggleFav(id, btn){
-      let favs = loadFavorites();
-      if(favs.includes(id)){
-        favs = favs.filter(f => f !== id);
-        btn.innerText = '♡';
-      } else {
-        favs.push(id);
-        btn.innerText = '♥';
-      }
-      saveFavorites(favs);
-      if(currentTab === 'fav') renderListings(listings.filter(l => isFav(l.id)));
+    function toggleFav(id, btn) {
+        let favs = loadFavorites();
+        if (favs.includes(id)) {
+            favs = favs.filter(f => f !== id);
+            btn.innerText = '♡';
+        } else {
+            favs.push(id);
+            btn.innerText = '♥';
+        }
+        saveFavorites(favs);
+
+        if (currentTab === 'fav') {
+            renderListings(listings.filter(l => isFav(l.id)));
+        }
     }
 
-    async function fetchData(){
-      const r = await fetch(DATA_FILE);
-      listings = await r.json();
-      renderListings(listings);
+    async function fetchData() {
+        const r = await fetch(DATA_FILE);
+        listings = await r.json();
+        renderListings(listings);
     }
 
-    function renderListings(data){
-      const wrap = document.getElementById('listings');
-      wrap.innerHTML = '';
-      if(!data.length){
-        wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμα listings.</p>';
-        return;
-      }
-      const tpl = document.getElementById('cardTpl');
-      data.forEach(it => {
-        const node = tpl.content.cloneNode(true);
-        node.querySelector('.card-img').src = it.image || 'https://via.placeholder.com/800x400?text=No+Image';
-        node.querySelector('.location').innerText = it.location || '';
-        node.querySelector('.title').innerText = it.title || '';
-        node.querySelector('.price').innerText = it.price || '';
-        node.querySelector('.view').href = it.link || '#';
-        const favBtn = node.querySelector('.fav');
-        favBtn.innerText = isFav(it.id) ? '♥' : '♡';
-        favBtn.addEventListener('click', () => toggleFav(it.id, favBtn));
-        wrap.appendChild(node);
-      });
+    function renderListings(data) {
+        const wrap = document.getElementById('listings');
+        wrap.innerHTML = '';
+        if (!data.length) {
+            wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμα listings.</p>';
+            return;
+        }
+        const tpl = document.getElementById('cardTpl');
+        data.forEach(it => {
+            const node = tpl.content.cloneNode(true);
+            node.querySelector('.card-img').src = it.image || 'https://via.placeholder.com/800x400?text=No+Image';
+            node.querySelector('.location').innerText = it.location || '';
+            node.querySelector('.title').innerText = it.title || '';
+            node.querySelector('.price').innerText = it.price || '';
+            node.querySelector('.view').href = it.link || '#';
+
+            const favBtn = node.querySelector('.fav');
+            favBtn.innerText = isFav(it.id) ? '♥' : '♡';
+            favBtn.addEventListener('click', () => toggleFav(it.id, favBtn));
+
+            wrap.appendChild(node);
+        });
     }
 
-    document.getElementById('apply').addEventListener('click', ()=>{
-      let min = parseFloat(document.getElementById('min').value) || 0;
-      let max = parseFloat(document.getElementById('max').value) || Infinity;
-      let q = document.getElementById('q').value.trim().toLowerCase();
-      let filtered = listings.filter(it=>{
-        let p = parseFloat(it.price) || 0;
-        return p >= min && p <= max &&
-               (!q || it.title.toLowerCase().includes(q) || it.location.toLowerCase().includes(q));
-      });
-      if(currentTab === 'fav') filtered = filtered.filter(l => isFav(l.id));
-      renderListings(filtered);
+    // Φίλτρα
+    document.getElementById('apply').addEventListener('click', () => {
+        let min = parseFloat(document.getElementById('min').value) || 0;
+        let max = parseFloat(document.getElementById('max').value) || Infinity;
+        let q = document.getElementById('q').value.trim().toLowerCase();
+        let filtered = listings.filter(it => {
+            let p = parseFloat(it.price) || 0;
+            return p >= min && p <= max &&
+                   (!q || it.title.toLowerCase().includes(q) || it.location.toLowerCase().includes(q));
+        });
+        if (currentTab === 'fav') filtered = filtered.filter(l => isFav(l.id));
+        renderListings(filtered);
     });
 
-    document.getElementById('reset').addEventListener('click', ()=>{
-      document.getElementById('q').value='';
-      document.getElementById('min').value='';
-      document.getElementById('max').value='';
-      if(currentTab === 'fav') renderListings(listings.filter(l => isFav(l.id)));
-      else renderListings(listings);
+    document.getElementById('reset').addEventListener('click', () => {
+        document.getElementById('q').value = '';
+        document.getElementById('min').value = '';
+        document.getElementById('max').value = '';
+        if (currentTab === 'fav') renderListings(listings.filter(l => isFav(l.id)));
+        else renderListings(listings);
     });
 
-    document.getElementById('tab-all').addEventListener('click', ()=>{
-      currentTab = 'all';
-      document.getElementById('tab-all').classList.add('active');
-      document.getElementById('tab-fav').classList.remove('active');
-      renderListings(listings);
+    // Εναλλαγή tabs
+    document.getElementById('tab-all').addEventListener('click', () => {
+        currentTab = 'all';
+        document.getElementById('tab-all').classList.add('active');
+        document.getElementById('tab-fav').classList.remove('active');
+        renderListings(listings);
     });
 
-    document.getElementById('tab-fav').addEventListener('click', ()=>{
-      currentTab = 'fav';
-      document.getElementById('tab-fav').classList.add('active');
-      document.getElementById('tab-all').classList.remove('active');
-      renderListings(listings.filter(l => isFav(l.id)));
+    document.getElementById('tab-fav').addEventListener('click', () => {
+        currentTab = 'fav';
+        document.getElementById('tab-fav').classList.add('active');
+        document.getElementById('tab-all').classList.remove('active');
+        renderListings(listings.filter(l => isFav(l.id)));
     });
 
     fetchData();
-  </script>
+</script>
+
+
 </body>
 </html>
