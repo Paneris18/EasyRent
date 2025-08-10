@@ -28,6 +28,8 @@
     .fav { cursor: pointer; background: none; border: none; font-size: 18px; }
     .msg { text-align: center; padding: 20px; color: #777; }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
 <header>
@@ -183,5 +185,44 @@ document.getElementById('sort-desc').addEventListener('click', () => {
     renderListings(sorted);
 });
 
+let map = L.map("map").setView([37.9838, 23.7275], 6);
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+
+    attribution: "&copy; OpenStreetMap contributors"
+
+}).addTo(map);
+
+function updateMapMarkers(data) {
+
+    map.eachLayer(layer => {
+
+        if (layer instanceof L.Marker) map.removeLayer(layer);
+
+    });
+
+    data.forEach(it => {
+
+        if (it.lat && it.lng) {
+
+            L.marker([it.lat, it.lng]).addTo(map)
+
+                .bindPopup(`<b>${it.title}</b><br>${it.location}<br>${it.price} €`);
+
+        }
+
+    });
+
+}
+
+const oldRenderListings = renderListings;
+
+renderListings = function(data) {
+
+    oldRenderListings(data);
+
+    updateMapMarkers(data);
+
+};
 fetchData();
 </script>
