@@ -1,148 +1,175 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EasyRent</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyRent</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+    header { background: #333; color: white; padding: 10px; text-align: center; }
+    .filters { background: #fff; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+    .filters input { padding: 5px; }
+    .filters button { padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; }
+    .filters button#apply { background: #4CAF50; color: white; }
+    .filters button#reset { background: #999; color: white; }
+    .sort-buttons button { padding: 6px 12px; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .sort-buttons #sort-asc { background: #4CAF50; }
+    .sort-buttons #sort-desc { background: #f44336; margin-left: 5px; }
+    nav { background: #444; padding: 10px; text-align: center; }
+    nav button { background: #555; color: white; padding: 6px 12px; border: none; cursor: pointer; margin: 0 2px; border-radius: 4px; }
+    nav button.active { background: #4CAF50; }
+    #listings { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; padding: 10px; }
+    .card { background: #fff; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .card img { width: 100%; height: 160px; object-fit: cover; }
+    .card-body { padding: 10px; }
+    .card-body h3 { margin: 0 0 5px; }
+    .card-body p { margin: 0; color: #555; }
+    .actions { display: flex; justify-content: space-between; margin-top: 10px; }
+    .fav { cursor: pointer; background: none; border: none; font-size: 18px; }
+    .msg { text-align: center; padding: 20px; color: #777; }
+</style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="wrap">
-      <h1>EasyRent</h1>
-      <p class="tagline">Βρες γρήγορα το επόμενο σου σπίτι — συγκεντρωμένα listings (demo)</p>
+<header>
+    <h1>EasyRent</h1>
+</header>
+
+<div class="filters">
+    <input type="text" id="q" placeholder="Αναζήτηση...">
+    <input type="number" id="min" placeholder="Ελάχιστη τιμή">
+    <input type="number" id="max" placeholder="Μέγιστη τιμή">
+    <button id="apply">Εφαρμογή</button>
+    <button id="reset">Επαναφορά</button>
+    <div class="sort-buttons">
+        <button id="sort-asc">Τιμή ↑ (Αύξουσα)</button>
+        <button id="sort-desc">Τιμή ↓ (Φθίνουσα)</button>
     </div>
-  </header>
+</div>
 
-  <main class="wrap">
-    <div class="tabs">
-      <button id="tab-all" class="tab active">Όλες οι Αγγελίες</button>
-      <button id="tab-fav" class="tab">Αγαπημένα</button>
-    </div>
+<nav>
+    <button id="tab-all" class="active">Όλες</button>
+    <button id="tab-fav">Αγαπημένες</button>
+</nav>
 
-    <section class="controls">
-      <input id="q" placeholder="Αναζήτηση περιοχή ή λέξη-κλειδί..." />
-      <input id="min" type="number" placeholder="Ελάχιστη τιμή €" min="0" />
-      <input id="max" type="number" placeholder="Μέγιστη τιμή €" min="0" />
-      <select id="sort">
-        <option value="relevance">Ταξινόμηση: Συνάφεια</option>
-        <option value="price_asc">Τιμή: Αύξουσα</option>
-        <option value="price_desc">Τιμή: Φθίνουσα</option>
-      </select>
-      <button id="apply">Εφαρμογή</button>
-      <button id="reset">Επαναφορά</button>
-    </section>
+<div id="listings"></div>
 
-    <section id="listings" class="grid">Φόρτωση...</section>
-  </main>
-
-  <template id="cardTpl">
-    <article class="card">
-      <div class="imgwrap"><img class="card-img" src="" alt="listing image"></div>
-      <div class="card-body">
-        <div class="meta"><span class="location"></span></div>
-        <h3 class="title"></h3>
-        <div class="price"></div>
-        <div class="card-actions">
-          <a class="btn view" target="_blank" rel="noopener">Προβολή</a>
-          <button class="fav" title="Προσθήκη στα αγαπημένα">♡</button>
+<template id="cardTpl">
+    <div class="card">
+        <img class="card-img" src="" alt="">
+        <div class="card-body">
+            <h3 class="title"></h3>
+            <p class="location"></p>
+            <p class="price"></p>
+            <div class="actions">
+                <a class="view" href="#" target="_blank">Προβολή</a>
+                <button class="fav">♡</button>
+            </div>
         </div>
-      </div>
-    </article>
-  </template>
+    </div>
+</template>
 
 <script>
-    const DATA_FILE = 'data.json';
-    const FAV_KEY = 'easyrent_favs_v1';
-    let listings = [];
-    let currentTab = 'all';
+const DATA_FILE = 'data.json';
+const FAV_KEY = 'easyrent_favs_v1';
+let listings = [];
+let currentTab = 'all';
 
-    const loadFavorites = () => JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
-    const saveFavorites = favs => localStorage.setItem(FAV_KEY, JSON.stringify(favs));
-    const isFav = id => loadFavorites().includes(id);
+const loadFavorites = () => JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
+const saveFavorites = favs => localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+const isFav = id => loadFavorites().includes(id);
 
-    function toggleFav(id, btn) {
-        let favs = loadFavorites();
-        if (favs.includes(id)) {
-            favs = favs.filter(f => f !== id);
-            btn.innerText = '♡';
-        } else {
-            favs.push(id);
-            btn.innerText = '♥';
-        }
-        saveFavorites(favs);
-        if (currentTab === 'fav') renderListings(listings.filter(l => isFav(l.id)));
+function toggleFav(id) {
+    let favs = loadFavorites();
+    if (favs.includes(id)) {
+        favs = favs.filter(f => f !== id);
+    } else {
+        favs.push(id);
     }
+    saveFavorites(favs);
+    renderListings(getCurrentList());
+}
 
-    async function fetchData() {
-        const r = await fetch(DATA_FILE);
-        listings = await r.json();
-        renderListings(listings);
-    }
+async function fetchData() {
+    const r = await fetch(DATA_FILE);
+    listings = await r.json();
+    renderListings(listings);
+}
 
-    function renderListings(data) {
-        const wrap = document.getElementById('listings');
-        wrap.innerHTML = '';
-        if (!data.length) {
-            wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμες αγγελίες.</p>';
-            return;
-        }
-        const tpl = document.getElementById('cardTpl');
-        data.forEach(it => {
-            const node = tpl.content.cloneNode(true);
-            node.querySelector('.card-img').src = it.image || 'https://via.placeholder.com/800x400?text=No+Image';
-            node.querySelector('.location').innerText = it.location || '';
-            node.querySelector('.title').innerText = it.title || '';
-            node.querySelector('.price').innerText = it.price + ' €';
-            node.querySelector('.view').href = it.link || '#';
-            const favBtn = node.querySelector('.fav');
-            favBtn.innerText = isFav(it.id) ? '♥' : '♡';
-            favBtn.addEventListener('click', () => toggleFav(it.id, favBtn));
-            wrap.appendChild(node);
-        });
-    }
+function getCurrentList() {
+    let q = document.getElementById('q').value.trim().toLowerCase();
+    let min = parseFloat(document.getElementById('min').value);
+    let max = parseFloat(document.getElementById('max').value);
+    if (isNaN(min) || min < 0) min = 0;
+    if (isNaN(max) || max < 0) max = Infinity;
 
-    function applyFilters() {
-        let min = parseFloat(document.getElementById('min').value);
-        let max = parseFloat(document.getElementById('max').value);
-        let q = document.getElementById('q').value.trim().toLowerCase();
-        if (isNaN(min) || min < 0) min = 0;
-        if (isNaN(max) || max < 0) max = Infinity;
-
-        let filtered = listings.filter(it => {
-            let p = parseFloat(it.price) || 0;
-            return p >= min && p <= max &&
-                (!q || it.title.toLowerCase().includes(q) || it.location.toLowerCase().includes(q));
-        });
-        if (currentTab === 'fav') filtered = filtered.filter(l => isFav(l.id));
-        renderListings(filtered);
-    }
-
-    document.getElementById('apply').addEventListener('click', applyFilters);
-
-    document.getElementById('reset').addEventListener('click', () => {
-        document.getElementById('q').value = '';
-        document.getElementById('min').value = '';
-        document.getElementById('max').value = '';
-        if (currentTab === 'fav') renderListings(listings.filter(l => isFav(l.id)));
-        else renderListings(listings);
+    let filtered = listings.filter(it => {
+        let p = Number(it.price) || 0;
+        return p >= min && p <= max &&
+            (!q || it.title.toLowerCase().includes(q) || it.location.toLowerCase().includes(q));
     });
 
-    document.getElementById('tab-all').addEventListener('click', () => {
-        currentTab = 'all';
-        document.getElementById('tab-all').classList.add('active');
-        document.getElementById('tab-fav').classList.remove('active');
-        renderListings(listings);
-    });
+    if (currentTab === 'fav') {
+        filtered = filtered.filter(l => isFav(l.id));
+    }
+    return filtered;
+}
 
-    document.getElementById('tab-fav').addEventListener('click', () => {
-        currentTab = 'fav';
-        document.getElementById('tab-fav').classList.add('active');
-        document.getElementById('tab-all').classList.remove('active');
-        renderListings(listings.filter(l => isFav(l.id)));
+function renderListings(data) {
+    const wrap = document.getElementById('listings');
+    wrap.innerHTML = '';
+    if (!data.length) {
+        wrap.innerHTML = '<p class="msg">Δεν υπάρχουν διαθέσιμες αγγελίες.</p>';
+        return;
+    }
+    const tpl = document.getElementById('cardTpl');
+    data.forEach(it => {
+        const node = tpl.content.cloneNode(true);
+        node.querySelector('.card-img').src = it.image || 'https://via.placeholder.com/800x400?text=No+Image';
+        node.querySelector('.location').innerText = it.location || '';
+        node.querySelector('.title').innerText = it.title || '';
+        node.querySelector('.price').innerText = it.price + ' €';
+        node.querySelector('.view').href = it.link || '#';
+        const favBtn = node.querySelector('.fav');
+        favBtn.innerText = isFav(it.id) ? '♥' : '♡';
+        favBtn.addEventListener('click', () => toggleFav(it.id));
+        wrap.appendChild(node);
     });
+}
 
-    fetchData();
+document.getElementById('apply').addEventListener('click', () => {
+    renderListings(getCurrentList());
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+    document.getElementById('q').value = '';
+    document.getElementById('min').value = '';
+    document.getElementById('max').value = '';
+    renderListings(getCurrentList());
+});
+
+document.getElementById('tab-all').addEventListener('click', () => {
+    currentTab = 'all';
+    document.getElementById('tab-all').classList.add('active');
+    document.getElementById('tab-fav').classList.remove('active');
+    renderListings(getCurrentList());
+});
+
+document.getElementById('tab-fav').addEventListener('click', () => {
+    currentTab = 'fav';
+    document.getElementById('tab-fav').classList.add('active');
+    document.getElementById('tab-all').classList.remove('active');
+    renderListings(getCurrentList());
+});
+
+document.getElementById('sort-asc').addEventListener('click', () => {
+    let sorted = getCurrentList().sort((a, b) => a.price - b.price);
+    renderListings(sorted);
+});
+
+document.getElementById('sort-desc').addEventListener('click', () => {
+    let sorted = getCurrentList().sort((a, b) => b.price - a.price);
+    renderListings(sorted);
+});
+
+fetchData();
 </script>
-</body>
-</html>
