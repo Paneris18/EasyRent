@@ -35,7 +35,19 @@
 </header>
 
 <div class="filters">
-    <input type="text" id="q" placeholder="Αναζήτηση...">
+    <input type="text" id="q" placeholder="Αναζήτηση..." list="areas">
+<datalist id="areas">
+    <option value="Αθήνα">
+    <option value="Θεσσαλονίκη">
+    <option value="Πάτρα">
+    <option value="Ηράκλειο">
+    <option value="Λάρισα">
+    <option value="Βόλος">
+    <option value="Ιωάννινα">
+    <option value="Χανιά">
+    <option value="Ρόδος">
+    <option value="Καλαμάτα">
+</datalist>
     <input type="number" id="min" placeholder="Ελάχιστη τιμή">
     <input type="number" id="max" placeholder="Μέγιστη τιμή">
     <button id="apply">Εφαρμογή</button>
