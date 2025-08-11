@@ -1,204 +1,110 @@
-/* ====== Βασικές ρυθμίσεις ====== */
 body {
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  margin: 0;
-  background: #f8f9fa;
-  color: #333;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f4f4f4;
 }
 
-.wrap {
-  max-width: 1200px;
-  margin: auto;
-  padding: 1rem;
+header {
+    background: #333;
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+    font-size: 26px;
+    font-weight: bold;
 }
 
-.site-header {
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: white;
-  padding: 1.5rem 0;
-  text-align: center;
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    justify-content: center;
 }
 
-.site-header h1 {
-  margin: 0;
-  font-size: 2rem;
+    .filters input, .filters button {
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .filters button {
+        cursor: pointer;
+        border: none;
+    }
+
+.btn-green {
+    background: #28a745;
+    color: white;
 }
 
-.tagline {
-  font-size: 0.9rem;
-  opacity: 0.85;
+.btn-red {
+    background: #dc3545;
+    color: white;
 }
 
-/* ====== Tabs ====== */
-.tabs {
-  display: flex;
-  gap: 1rem;
-  margin: 1rem 0;
+.btn-gray {
+    background: #6c757d;
+    color: white;
 }
 
-.tab {
-  background: none;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 0.5rem 1rem;
-  position: relative;
-  transition: color 0.3s;
+    .btn-green:hover, .btn-red:hover, .btn-gray:hover {
+        opacity: 0.85;
+    }
+
+.listings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    padding: 20px;
 }
 
-.tab.active {
-  font-weight: bold;
-  color: #007bff;
-}
-
-.tab::after {
-  content: "";
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 0%;
-  height: 2px;
-  background: #007bff;
-  transition: width 0.3s;
-}
-
-.tab:hover::after,
-.tab.active::after {
-  width: 100%;
-}
-
-/* ====== Φίλτρα ====== */
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.controls input,
-.controls select,
-.controls button {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-.controls button {
-  background: #007bff;
-  color: white;
-  cursor: pointer;
-}
-
-.controls button:hover {
-  background: #0056b3;
-}
-
-/* ====== Grid & Κάρτες ====== */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-.card {
-  background: white;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-}
-
-.imgwrap {
-  width: 100%;
-  height: 180px;
-  overflow: hidden;
-}
-
-.card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.card-body {
-  padding: 0.8rem;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.meta {
-  font-size: 0.85rem;
-  color: #777;
-  margin-bottom: 0.5rem;
-}
-
-.title {
-  font-size: 1.1rem;
-  margin: 0 0 0.5rem;
-}
-
-.price {
-  font-size: 1.2rem;
-  color: #007bff;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.card-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.view {
-  background: #28a745;
-  color: white;
-  padding: 0.4rem 0.8rem;
-  border-radius: 5px;
-  text-decoration: none;
-  font-size: 0.9rem;
-}
-
-.view:hover {
-  background: #1e7e34;
-}
-
-.fav {
-  font-size: 1.4rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.2s, color 0.2s;
-}
-
-.fav:hover {
-  transform: scale(1.2);
-  color: red;
-}
-
-/* ====== Μηνύματα ====== */
-.msg {
-  grid-column: 1/-1;
-  text-align: center;
-  padding: 2rem;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-/* ====== Responsive ====== */
-@media (max-width: 600px) {
-  .controls {
+.listing {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex;
     flex-direction: column;
-  }
 }
 
+    .listing img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+
+    .listing h3 {
+        margin: 10px;
+        font-size: 18px;
+    }
+
+    .listing p {
+        margin: 0 10px 10px;
+        color: #666;
+    }
+
+    .listing button {
+        margin: 10px;
+        border: none;
+        background: none;
+        font-size: 20px;
+        cursor: pointer;
+    }
+
+.map-container {
+    height: 400px;
+    margin: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
